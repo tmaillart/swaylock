@@ -33,7 +33,7 @@ add_project_arguments(
 )
 
 if is_freebsd
-	add_project_arguments('-D_C11_SOURCE', language: 'c')
+	add_project_arguments('-D_C99_SOURCE', language: 'c')
 endif
 
 wayland_client = dependency('wayland-client', version: '>=1.20.0')
