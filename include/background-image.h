@@ -17,4 +17,6 @@ cairo_surface_t *load_background_image(const char *path);
 void render_background_image(cairo_t *cairo, cairo_surface_t *image,
 		enum background_mode mode, int buffer_width, int buffer_height);
 
+#define FRAME_COUNT 256
+
 #endif

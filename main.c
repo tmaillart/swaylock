@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+#include <dirent.h>
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <ctype.h>
@@ -26,6 +28,45 @@
 #include "seat.h"
 #include "swaylock.h"
 #include "ext-session-lock-v1-client-protocol.h"
+
+cairo_surface_t *frames[FRAME_COUNT];
+int total_frame;
+int myw = 0;
+int myh = 0;
+
+static void preload_image_sequence(const char * directory) {
+	int j = 0, item_count;
+	struct dirent **namelist;
+	const char *previous_cwd = getenv("PWD");
+
+	if (directory)
+		chdir(directory);
+	item_count = scandir(".", &namelist, 0, alphasort);
+	printf("list total %d\n", item_count);
+	for (int i = 0; i < item_count && j < FRAME_COUNT; ++i) {
+		char *extension;
+
+		extension = strrchr(namelist[i]->d_name, '.');
+		if (namelist[i]->d_type != DT_DIR && extension && strcmp(extension, ".png") == 0) {
+			cairo_surface_t *surface;
+
+			surface = cairo_image_surface_create_from_png(namelist[i]->d_name);
+			if (surface) {
+				int w, h;
+
+				w = cairo_image_surface_get_width(surface);
+				h = cairo_image_surface_get_height(surface);
+				myw = w > myw ? w : myw;
+				myh = h > myh ? h : myh;
+				frames[j++] = surface;
+			}
+		}
+	}
+	total_frame = j;
+	printf("total %d\n", total_frame);
+	if (previous_cwd)
+		chdir(previous_cwd);
+}
 
 static uint32_t parse_color(const char *color) {
 	if (color[0] == '#') {
@@ -510,6 +551,7 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		LO_RING_VER_COLOR,
 		LO_RING_WRONG_COLOR,
 		LO_SEP_COLOR,
+		LO_SEQUENCE,
 		LO_TEXT_COLOR,
 		LO_TEXT_CLEAR_COLOR,
 		LO_TEXT_CAPS_LOCK_COLOR,
@@ -567,6 +609,7 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		{"ring-ver-color", required_argument, NULL, LO_RING_VER_COLOR},
 		{"ring-wrong-color", required_argument, NULL, LO_RING_WRONG_COLOR},
 		{"separator-color", required_argument, NULL, LO_SEP_COLOR},
+		{"sequence", required_argument, NULL, LO_SEQUENCE},
 		{"text-color", required_argument, NULL, LO_TEXT_COLOR},
 		{"text-clear-color", required_argument, NULL, LO_TEXT_CLEAR_COLOR},
 		{"text-caps-lock-color", required_argument, NULL, LO_TEXT_CAPS_LOCK_COLOR},
@@ -950,6 +993,12 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 				state->args.colors.separator = parse_color(optarg);
 			}
 			break;
+		case LO_SEQUENCE:
+			if (state) {
+				free(state->args.directory);
+				state->args.directory = strdup(optarg);
+			}
+			break;
 		case LO_TEXT_COLOR:
 			if (state) {
 				state->args.colors.text.input = parse_color(optarg);
@@ -1168,6 +1217,9 @@ int main(int argc, char **argv) {
 			return result;
 		}
 	}
+
+	if (state.args.directory)
+		preload_image_sequence(state.args.directory);
 
 	if (line_mode == LM_INSIDE) {
 		state.args.colors.line = state.args.colors.inside;

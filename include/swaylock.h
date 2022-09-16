@@ -63,6 +63,7 @@ struct swaylock_args {
 	bool daemonize;
 	int ready_fd;
 	bool indicator_idle_visible;
+	char *directory;
 };
 
 struct swaylock_password {
