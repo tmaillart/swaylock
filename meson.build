@@ -40,7 +40,7 @@ add_project_arguments(
 	language : 'c')
 
 if is_freebsd
-	add_project_arguments('-D_C11_SOURCE', language: 'c')
+	add_project_arguments('-D_C99_SOURCE', language: 'c')
 endif
 
 if get_option('sse')

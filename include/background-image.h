@@ -13,6 +13,8 @@ enum background_mode {
 	BACKGROUND_MODE_INVALID,
 };
 
+#define FRAME_COUNT 256
+
 struct swaylock_surface;
 
 enum background_mode parse_background_mode(const char *mode);

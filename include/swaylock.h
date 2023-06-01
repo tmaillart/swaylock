@@ -80,6 +80,7 @@ struct swaylock_args {
 	uint32_t password_grace_period;
 	bool password_grace_no_mouse;
 	bool password_grace_no_touch;
+	char *directory;
 };
 
 struct swaylock_password {
